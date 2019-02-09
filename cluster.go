@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mediocregopher/radix/v3/resp"
-	"github.com/mediocregopher/radix/v3/resp/resp2"
+	"github.com/suki-fredrik/radix/resp"
+	"github.com/suki-fredrik/radix/resp/resp2"
 )
 
 // dedupe is used to deduplicate a function invocation, so if multiple
