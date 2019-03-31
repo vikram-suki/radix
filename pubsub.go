@@ -179,6 +179,7 @@ type pubSubConn struct {
 	// These are used for writing commands and waiting for their response (e.g.
 	// SUBSCRIBE, PING). See the do method for how that works.
 	cmdL     sync.Mutex
+	cmdResL  sync.Mutex
 	cmdResCh chan error
 
 	close    sync.Once
@@ -188,6 +189,7 @@ type pubSubConn struct {
 	// get on-the-fly updates of when the connection fails. Maybe one day this
 	// could be exposed if there's a clean way of doing so, or another way
 	// accomplishing the same thing could be done instead.
+	closeErrL  sync.Mutex
 	closeErrCh chan error
 
 	// only used during testing
@@ -224,6 +226,60 @@ func newPubSub(rc Conn, closeErrCh chan error) PubSubConn {
 	}()
 
 	return c
+}
+
+func (c *pubSubConn) getCloseErrCh() chan error {
+	c.closeErrL.Lock()
+	defer c.closeErrL.Unlock()
+	return c.closeErrCh
+}
+
+func (c *pubSubConn) closeCloseErrCh() {
+	c.closeErrL.Lock()
+	defer c.closeErrL.Unlock()
+	if c.closeErrCh != nil {
+		close(c.closeErrCh)
+		c.closeErrCh = nil
+	}
+}
+
+func (c *pubSubConn) getCmdResCh() chan error {
+	c.cmdResL.Lock()
+	defer c.cmdResL.Unlock()
+	return c.cmdResCh
+}
+
+func (c *pubSubConn) closeCmdResCh() {
+	c.cmdResL.Lock()
+	defer c.cmdResL.Unlock()
+	if c.cmdResCh != nil {
+		close(c.cmdResCh)
+		c.cmdResCh = nil
+	}
+}
+
+func (c *pubSubConn) sendCmdRes(err error) {
+	if ch := c.getCmdResCh(); ch != nil {
+		ch <- err
+	}
+}
+
+func (c *pubSubConn) sendCmdResNb(err error) {
+	if ch := c.getCmdResCh(); ch != nil {
+		select {
+		case ch <- err:
+		default:
+		}
+	}
+}
+
+func (c *pubSubConn) recvCmdRes() error {
+	if ch := c.getCmdResCh(); ch != nil {
+		if err, ok := <-ch; ok {
+			return err
+		}
+	}
+	return errors.New("connection closed")
 }
 
 func (c *pubSubConn) testEvent(str string) {
@@ -263,7 +319,7 @@ func (c *pubSubConn) spin() {
 		if err := rm.UnmarshalInto(&m); err == nil {
 			c.publish(m)
 		} else {
-			c.cmdResCh <- nil
+			c.sendCmdRes(nil)
 		}
 	}
 }
@@ -278,11 +334,8 @@ func (c *pubSubConn) do(exp int, cmd string, args ...string) error {
 	}
 
 	for i := 0; i < exp; i++ {
-		err, ok := <-c.cmdResCh
-		if err != nil {
+		if err := c.recvCmdRes(); err != nil {
 			return err
-		} else if !ok {
-			return errors.New("connection closed")
 		}
 	}
 	return nil
@@ -297,16 +350,17 @@ func (c *pubSubConn) closeInner(cmdResErr error) error {
 		c.psubs = nil
 
 		if cmdResErr != nil {
-			select {
-			case c.cmdResCh <- cmdResErr:
-			default:
+			if ch := c.getCmdResCh(); ch != nil {
+				c.sendCmdResNb(cmdResErr)
 			}
 		}
-		if c.closeErrCh != nil {
-			c.closeErrCh <- cmdResErr
-			close(c.closeErrCh)
+
+		if ch := c.getCloseErrCh(); ch != nil {
+			ch <- cmdResErr
+			c.closeCloseErrCh()
 		}
-		close(c.cmdResCh)
+
+		c.closeCmdResCh()
 	})
 	return c.closeErr
 }
