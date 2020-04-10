@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/suki-fredrik/radix/resp"
+	"github.com/vikram-suki/radix/v3/resp"
 )
 
 // ErrPoolEmpty is used by Pools created using the PoolOnEmptyErrAfter option

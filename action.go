@@ -11,8 +11,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/suki-fredrik/radix/resp"
-	"github.com/suki-fredrik/radix/resp/resp2"
+	"github.com/vikram-suki/radix/v3/resp"
+	"github.com/vikram-suki/radix/v3/resp/resp2"
 )
 
 // Action can perform one or more tasks using a Conn

@@ -17,9 +17,9 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/suki-fredrik/radix/internal/bytesutil"
+	"github.com/vikram-suki/radix/v3/internal/bytesutil"
 
-	"github.com/suki-fredrik/radix/resp"
+	"github.com/vikram-suki/radix/v3/resp"
 )
 
 var delim = []byte{'\r', '\n'}

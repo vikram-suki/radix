@@ -6,9 +6,9 @@ import (
 	"fmt"
 	. "testing"
 
-	"github.com/suki-fredrik/radix/resp/resp2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/vikram-suki/radix/v3/resp/resp2"
 )
 
 func TestCmdAction(t *T) {

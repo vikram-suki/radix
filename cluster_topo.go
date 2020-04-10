@@ -7,8 +7,8 @@ import (
 	"net"
 	"sort"
 
-	"github.com/suki-fredrik/radix/resp"
-	"github.com/suki-fredrik/radix/resp/resp2"
+	"github.com/vikram-suki/radix/v3/resp"
+	"github.com/vikram-suki/radix/v3/resp/resp2"
 )
 
 // ClusterNode describes a single node in the cluster at a moment in time.
