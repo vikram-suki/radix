@@ -7,7 +7,7 @@ import (
 	"io"
 	. "testing"
 
-	"github.com/vikram-suki/mediocre-go-lib/mrand"
+	"github.com/mediocregopher/mediocre-go-lib/mrand"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
